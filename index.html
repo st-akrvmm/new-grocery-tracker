@@ -1,0 +1,488 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grocery Tracker</title>
+    <!-- Update Tailwind script with dark mode config -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-gray-900 dark:to-gray-800 min-h-screen flex flex-col items-center p-6 text-gray-900 dark:text-gray-100">
+    <header class="w-full max-w-4xl text-center mb-8 flex justify-between items-center">
+        <div>
+            <h1 class="text-4xl font-bold text-indigo-800 dark:text-indigo-200">Grocery Tracker</h1>
+            <p class="text-lg text-gray-600 dark:text-gray-300 mt-2">Plan, budget, and track your groceries effortlessly</p>
+        </div>
+        <!-- Add id to toggle button -->
+        <button id="dark-mode-toggle" onclick="toggleDarkMode()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">Toggle Dark Mode</button>
+    </header>
+
+    <main class="w-full max-w-4xl bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 space-y-8">
+        <!-- Budget Setup -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold text-indigo-700 dark:text-indigo-300">Set Monthly Budget</h2>
+            <div class="flex space-x-4">
+                <select id="budget-currency" class="flex-1 p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
+                    <option value="">Select Currency</option>
+                </select>
+                <input id="budget-amount" type="number" placeholder="Budget Amount" class="flex-1 p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
+                <button onclick="setBudget()" class="px-6 py-3 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition">Save Budget</button>
+            </div>
+            <p id="current-budget" class="text-lg text-gray-700 dark:text-gray-300"></p>
+        </section>
+
+        <!-- Add Item Form -->
+        <!-- Wrap add item form in div for outside click detection -->
+        <section class="space-y-4" id="add-item-section">
+            <h2 class="text-2xl font-semibold text-indigo-700 dark:text-indigo-300">Add Grocery Item</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Wrap item-name and suggestions in a relative div for proper positioning and width -->
+                <div class="relative">
+                    <input id="item-name" type="text" placeholder="Item Name (e.g., Oats)" class="p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400" oninput="showSuggestions(this.value)">
+                    <div id="suggestions" class="absolute z-10 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg mt-1 w-full max-h-40 overflow-y-auto hidden"></div>
+                </div>
+                <input id="item-price" type="number" placeholder="Unit Price" class="p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
+                <input id="item-frequency" type="number" placeholder="Frequency (days)" class="p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
+                <button id="add-button" onclick="addItem()" class="px-6 py-3 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition">Add Item</button>
+            </div>
+        </section>
+
+        <!-- Grocery List -->
+        <section class="space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-semibold text-indigo-700 dark:text-indigo-300">Grocery Items</h2>
+                <button onclick="undo()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">Undo</button>
+            </div>
+            <div id="item-list" class="space-y-4"></div>
+        </section>
+
+        <!-- Monthly Summary -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold text-indigo-700 dark:text-indigo-300">Monthly Summary</h2>
+            <div id="summary" class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+                <div class="p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                    <p class="text-sm text-gray-600 dark:text-gray-300">Total Planned</p>
+                    <p id="total-planned" class="text-xl font-bold text-blue-800 dark:text-blue-200"></p>
+                </div>
+                <div class="p-4 bg-red-50 dark:bg-red-900 rounded-lg">
+                    <p class="text-sm text-gray-600 dark:text-gray-300">Total Spent</p>
+                    <p id="total-spent" class="text-xl font-bold text-red-800 dark:text-red-200"></p>
+                </div>
+                <div class="p-4 bg-green-50 dark:bg-green-900 rounded-lg">
+                    <p class="text-sm text-gray-600 dark:text-gray-300">Remaining Budget</p>
+                    <p id="remaining-budget" class="text-xl font-bold text-green-800 dark:text-green-200"></p>
+                </div>
+                <div class="p-4 bg-purple-50 dark:bg-purple-900 rounded-lg">
+                    <p class="text-sm text-gray-600 dark:text-gray-300">Overall Progress</p>
+                    <p id="overall-progress" class="text-xl font-bold text-purple-800 dark:text-purple-200"></p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const STORAGE_KEY = 'groceryTracker';
+        
+        function loadData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            return saved ? JSON.parse(saved) : { budget: 0, currency: '$', items: [] };
+        }
+        
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+        
+        let data = loadData();
+        let editingIndex = -1;
+        let history = [];
+        
+        function setBudget() {
+            const currency = document.getElementById('budget-currency').value || '$';
+            const amount = parseFloat(document.getElementById('budget-amount').value) || 0;
+            data.currency = currency;
+            data.budget = amount;
+            saveData();
+            render();
+        }
+        
+        function addItem() {
+            history.push(JSON.parse(JSON.stringify(data)));
+            const name = document.getElementById('item-name').value.trim();
+            const price = parseFloat(document.getElementById('item-price').value) || 0;
+            const frequency = parseInt(document.getElementById('item-frequency').value) || 1;
+            
+            if (name && price > 0 && frequency > 0) {
+                const timesPerMonth = Math.floor(30 / frequency);
+                const monthlyCost = timesPerMonth * price;
+                
+                if (editingIndex !== -1) {
+                    // Update existing item
+                    data.items[editingIndex] = {
+                        ...data.items[editingIndex],
+                        name,
+                        price,
+                        frequency,
+                        timesPerMonth,
+                        monthlyCost
+                    };
+                    editingIndex = -1;
+                    document.getElementById('add-button').innerText = 'Add Item';
+                } else {
+                    // Add new item
+                    data.items.push({
+                        name,
+                        price,
+                        frequency,
+                        timesPerMonth,
+                        monthlyCost,
+                        timesEaten: 0,
+                        lastEaten: null
+                    });
+                }
+                saveData();
+                render();
+                // Clear inputs
+                document.getElementById('item-name').value = '';
+                document.getElementById('item-price').value = '';
+                document.getElementById('item-frequency').value = '';
+            } else {
+                alert('Please fill in all fields with valid values.');
+            }
+        }
+        
+        function editItem(index) {
+            editingIndex = index;
+            const item = data.items[index];
+            document.getElementById('item-name').value = item.name;
+            document.getElementById('item-price').value = item.price;
+            document.getElementById('item-frequency').value = item.frequency;
+            document.getElementById('add-button').innerText = 'Update Item';
+        }
+        
+        function deleteItem(index) {
+            if (confirm('Are you sure you want to delete this item?')) {
+                history.push(JSON.parse(JSON.stringify(data)));
+                data.items.splice(index, 1);
+                saveData();
+                render();
+            }
+        }
+        
+        function incrementEaten(index) {
+            history.push(JSON.parse(JSON.stringify(data)));
+            if (data.items[index].timesEaten < data.items[index].timesPerMonth) {
+                data.items[index].timesEaten++;
+                data.items[index].lastEaten = new Date().toLocaleDateString();
+                saveData();
+                render();
+            }
+        }
+        
+        function decrementEaten(index) {
+            history.push(JSON.parse(JSON.stringify(data)));
+            if (data.items[index].timesEaten > 0) {
+                data.items[index].timesEaten--;
+                saveData();
+                render();
+            }
+        }
+        
+        function render() {
+            // Current Budget
+            document.getElementById('current-budget').innerText = `Current Budget: ${data.currency}${data.budget.toFixed(2)}`;
+            
+            // Item List
+            const itemList = document.getElementById('item-list');
+            itemList.innerHTML = '';
+            data.items.forEach((item, index) => {
+                const progress = (item.timesEaten / item.timesPerMonth) * 100;
+                const itemCard = `
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-200">${item.name}</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Price: ${data.currency}${item.price.toFixed(2)} | Freq: every ${item.frequency} days</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Needed: ${item.timesPerMonth} times | Eaten: ${item.timesEaten}</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Last eaten: ${item.lastEaten || 'Never'}</p>
+                            <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5 mt-2">
+                                <div class="bg-indigo-600 dark:bg-indigo-400 h-2.5 rounded-full" style="width: ${progress}%"> </div>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${progress.toFixed(0)}% complete</p>
+                        </div>
+                        <!-- Buttons: adjust hover for dark -->
+                        <div class="flex space-x-2 item-card-buttons">
+                            <button onclick="editItem(${index})" class="px-4 py-2 bg-yellow-500 dark:bg-yellow-600 text-white rounded-lg hover:bg-yellow-600 dark:hover:bg-yellow-700 transition">Edit</button>
+                            <button onclick="decrementEaten(${index})" class="px-4 py-2 bg-red-500 dark:bg-red-600 text-white rounded-lg hover:bg-red-600 dark:hover:bg-red-700 transition ${item.timesEaten <= 0 ? 'opacity-50 cursor-not-allowed' : ''}">-</button>
+                            <button onclick="incrementEaten(${index})" class="px-4 py-2 bg-green-500 dark:bg-green-600 text-white rounded-lg hover:bg-green-600 dark:hover:bg-green-700 transition ${item.timesEaten >= item.timesPerMonth ? 'opacity-50 cursor-not-allowed' : ''}">+</button>
+                            <button onclick="deleteItem(${index})" class="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-500 text-xl font-bold">&times;</button>
+                        </div>
+                    </div>
+                `;
+                itemList.innerHTML += itemCard;
+            });
+            
+            // Summary
+            const totalPlanned = data.items.reduce((sum, item) => sum + item.monthlyCost, 0);
+            const totalSpent = data.items.reduce((sum, item) => sum + (item.price * item.timesEaten), 0);
+            const remaining = data.budget - totalSpent;
+            const overallProgress = data.items.length > 0 ? (data.items.reduce((sum, item) => sum + (item.timesEaten / item.timesPerMonth), 0) / data.items.length * 100).toFixed(0) : 0;
+            
+            document.getElementById('total-planned').innerText = `${data.currency}${totalPlanned.toFixed(2)}`;
+            document.getElementById('total-spent').innerText = `${data.currency}${totalSpent.toFixed(2)}`;
+            document.getElementById('remaining-budget').innerText = `${data.currency}${remaining.toFixed(2)}`;
+            document.getElementById('overall-progress').innerText = `${overallProgress}%`;
+        }
+        
+        const commonItems = ['Oats', 'Milk', 'Eggs', 'Chicken Breast', 'Rice', 'Bananas', 'Apples', 'Bread', 'Pasta', 'Cheese', 'Yogurt', 'Tomatoes', 'Potatoes', 'Onions', 'Garlic', 'Spinach', 'Broccoli', 'Carrots', 'Beef', 'Fish', 'Butter', 'Olive Oil', 'Salt', 'Sugar', 'Flour', 'Coffee', 'Tea', 'Cereal', 'Nuts', 'Honey'];
+        
+        function showSuggestions(value) {
+            const suggestionsDiv = document.getElementById('suggestions');
+            suggestionsDiv.innerHTML = '';
+            if (!value) {
+                suggestionsDiv.classList.add('hidden');
+                return;
+            }
+            const filtered = commonItems.filter(item => item.toLowerCase().startsWith(value.toLowerCase()));
+            if (filtered.length === 0) {
+                suggestionsDiv.classList.add('hidden');
+                return;
+            }
+            filtered.forEach(item => {
+                const suggestion = document.createElement('div');
+                suggestion.classList.add('p-2', 'hover:bg-gray-100', 'cursor-pointer');
+                suggestion.textContent = item;
+                suggestion.onclick = () => {
+                    document.getElementById('item-name').value = item;
+                    suggestionsDiv.classList.add('hidden');
+                };
+                suggestionsDiv.appendChild(suggestion);
+            });
+            suggestionsDiv.classList.remove('hidden');
+        }
+        
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!event.target.closest('#item-name') && !event.target.closest('#suggestions')) {
+                document.getElementById('suggestions').classList.add('hidden');
+            }
+        });
+        
+        const currencies = [
+            {code: 'AED', name: 'United Arab Emirates Dirham', symbol: 'د.إ'},
+            {code: 'AFN', name: 'Afghan Afghani', symbol: '؋'},
+            {code: 'ALL', name: 'Albanian Lek', symbol: 'L'},
+            {code: 'AMD', name: 'Armenian Dram', symbol: '֏'},
+            {code: 'ANG', name: 'Netherlands Antillean Guilder', symbol: 'ƒ'},
+            {code: 'AOA', name: 'Angolan Kwanza', symbol: 'Kz'},
+            {code: 'ARS', name: 'Argentine Peso', symbol: '$'},
+            {code: 'AUD', name: 'Australian Dollar', symbol: '$'},
+            {code: 'AWG', name: 'Aruban Florin', symbol: 'ƒ'},
+            {code: 'AZN', name: 'Azerbaijani Manat', symbol: '₼'},
+            {code: 'BAM', name: 'Bosnia-Herzegovina Convertible Mark', symbol: 'KM'},
+            {code: 'BBD', name: 'Barbadian Dollar', symbol: '$'},
+            {code: 'BDT', name: 'Bangladeshi Taka', symbol: '৳'},
+            {code: 'BGN', name: 'Bulgarian Lev', symbol: 'лв'},
+            {code: 'BHD', name: 'Bahraini Dinar', symbol: '.د.ب'},
+            {code: 'BIF', name: 'Burundian Franc', symbol: 'Fr'},
+            {code: 'BMD', name: 'Bermudan Dollar', symbol: '$'},
+            {code: 'BND', name: 'Brunei Dollar', symbol: '$'},
+            {code: 'BOB', name: 'Bolivian Boliviano', symbol: 'Bs.'},
+            {code: 'BRL', name: 'Brazilian Real', symbol: 'R$'},
+            {code: 'BSD', name: 'Bahamian Dollar', symbol: '$'},
+            {code: 'BTN', name: 'Bhutanese Ngultrum', symbol: 'Nu.'},
+            {code: 'BWP', name: 'Botswanan Pula', symbol: 'P'},
+            {code: 'BYN', name: 'Belarusian Ruble', symbol: 'Br'},
+            {code: 'BZD', name: 'Belize Dollar', symbol: '$'},
+            {code: 'CAD', name: 'Canadian Dollar', symbol: '$'},
+            {code: 'CDF', name: 'Congolese Franc', symbol: 'Fr'},
+            {code: 'CHF', name: 'Swiss Franc', symbol: 'Fr'},
+            {code: 'CLP', name: 'Chilean Peso', symbol: '$'},
+            {code: 'CNY', name: 'Chinese Yuan', symbol: '¥'},
+            {code: 'COP', name: 'Colombian Peso', symbol: '$'},
+            {code: 'CRC', name: 'Costa Rican Colón', symbol: '₡'},
+            {code: 'CUC', name: 'Cuban Convertible Peso', symbol: '$'},
+            {code: 'CUP', name: 'Cuban Peso', symbol: '$'},
+            {code: 'CVE', name: 'Cape Verdean Escudo', symbol: '$'},
+            {code: 'CZK', name: 'Czech Koruna', symbol: 'Kč'},
+            {code: 'DJF', name: 'Djiboutian Franc', symbol: 'Fr'},
+            {code: 'DKK', name: 'Danish Krone', symbol: 'kr'},
+            {code: 'DOP', name: 'Dominican Peso', symbol: '$'},
+            {code: 'DZD', name: 'Algerian Dinar', symbol: 'د.ج'},
+            {code: 'EGP', name: 'Egyptian Pound', symbol: '£'},
+            {code: 'ERN', name: 'Eritrean Nakfa', symbol: 'Nfk'},
+            {code: 'ETB', name: 'Ethiopian Birr', symbol: 'Br'},
+            {code: 'EUR', name: 'Euro', symbol: '€'},
+            {code: 'FJD', name: 'Fijian Dollar', symbol: '$'},
+            {code: 'FKP', name: 'Falkland Islands Pound', symbol: '£'},
+            {code: 'FOK', name: 'Faroese Króna', symbol: 'kr'},
+            {code: 'GBP', name: 'British Pound', symbol: '£'},
+            {code: 'GEL', name: 'Georgian Lari', symbol: '₾'},
+            {code: 'GGP', name: 'Guernsey Pound', symbol: '£'},
+            {code: 'GHS', name: 'Ghanaian Cedi', symbol: '₵'},
+            {code: 'GIP', name: 'Gibraltar Pound', symbol: '£'},
+            {code: 'GMD', name: 'Gambian Dalasi', symbol: 'D'},
+            {code: 'GNF', name: 'Guinean Franc', symbol: 'Fr'},
+            {code: 'GTQ', name: 'Guatemalan Quetzal', symbol: 'Q'},
+            {code: 'GYD', name: 'Guyanaese Dollar', symbol: '$'},
+            {code: 'HKD', name: 'Hong Kong Dollar', symbol: '$'},
+            {code: 'HNL', name: 'Honduran Lempira', symbol: 'L'},
+            {code: 'HRK', name: 'Croatian Kuna', symbol: 'kn'},
+            {code: 'HTG', name: 'Haitian Gourde', symbol: 'G'},
+            {code: 'HUF', name: 'Hungarian Forint', symbol: 'Ft'},
+            {code: 'IDR', name: 'Indonesian Rupiah', symbol: 'Rp'},
+            {code: 'ILS', name: 'Israeli New Sheqel', symbol: '₪'},
+            {code: 'IMP', name: 'Manx Pound', symbol: '£'},
+            {code: 'INR', name: 'Indian Rupee', symbol: '₹'},
+            {code: 'IQD', name: 'Iraqi Dinar', symbol: 'ع.د'},
+            {code: 'IRR', name: 'Iranian Rial', symbol: '﷼'},
+            {code: 'ISK', name: 'Icelandic Króna', symbol: 'kr'},
+            {code: 'JEP', name: 'Jersey Pound', symbol: '£'},
+            {code: 'JMD', name: 'Jamaican Dollar', symbol: '$'},
+            {code: 'JOD', name: 'Jordanian Dinar', symbol: 'د.ا'},
+            {code: 'JPY', name: 'Japanese Yen', symbol: '¥'},
+            {code: 'KES', name: 'Kenyan Shilling', symbol: 'Sh'},
+            {code: 'KGS', name: 'Kyrgystani Som', symbol: 'с'},
+            {code: 'KHR', name: 'Cambodian Riel', symbol: '៛'},
+            {code: 'KID', name: 'Kiribati Dollar', symbol: '$'},
+            {code: 'KMF', name: 'Comorian Franc', symbol: 'Fr'},
+            {code: 'KPW', name: 'North Korean Won', symbol: '₩'},
+            {code: 'KRW', name: 'South Korean Won', symbol: '₩'},
+            {code: 'KWD', name: 'Kuwaiti Dinar', symbol: 'د.ك'},
+            {code: 'KYD', name: 'Cayman Islands Dollar', symbol: '$'},
+            {code: 'KZT', name: 'Kazakhstani Tenge', symbol: '₸'},
+            {code: 'LAK', name: 'Laotian Kip', symbol: '₭'},
+            {code: 'LBP', name: 'Lebanese Pound', symbol: 'ل.ل'},
+            {code: 'LKR', name: 'Sri Lankan Rupee', symbol: 'Rs'},
+            {code: 'LRD', name: 'Liberian Dollar', symbol: '$'},
+            {code: 'LSL', name: 'Lesotho Loti', symbol: 'L'},
+            {code: 'LYD', name: 'Libyan Dinar', symbol: 'ل.د'},
+            {code: 'MAD', name: 'Moroccan Dirham', symbol: 'د.م.'},
+            {code: 'MDL', name: 'Moldovan Leu', symbol: 'L'},
+            {code: 'MGA', name: 'Malagasy Ariary', symbol: 'Ar'},
+            {code: 'MKD', name: 'Macedonian Denar', symbol: 'ден'},
+            {code: 'MMK', name: 'Myanma Kyat', symbol: 'Ks'},
+            {code: 'MNT', name: 'Mongolian Tugrik', symbol: '₮'},
+            {code: 'MOP', name: 'Macanese Pataca', symbol: 'P'},
+            {code: 'MRU', name: 'Mauritanian Ouguiya', symbol: 'UM'},
+            {code: 'MUR', name: 'Mauritian Rupee', symbol: '₨'},
+            {code: 'MVR', name: 'Maldivian Rufiyaa', symbol: '.ރ'},
+            {code: 'MWK', name: 'Malawian Kwacha', symbol: 'MK'},
+            {code: 'MXN', name: 'Mexican Peso', symbol: '$'},
+            {code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM'},
+            {code: 'MZN', name: 'Mozambican Metical', symbol: 'MT'},
+            {code: 'NAD', name: 'Namibian Dollar', symbol: '$'},
+            {code: 'NGN', name: 'Nigerian Naira', symbol: '₦'},
+            {code: 'NIO', name: 'Nicaraguan Córdoba', symbol: 'C$'},
+            {code: 'NOK', name: 'Norwegian Krone', symbol: 'kr'},
+            {code: 'NPR', name: 'Nepalese Rupee', symbol: '₨'},
+            {code: 'NZD', name: 'New Zealand Dollar', symbol: '$'},
+            {code: 'OMR', name: 'Omani Rial', symbol: 'ر.ع.'},
+            {code: 'PAB', name: 'Panamanian Balboa', symbol: 'B/.'},
+            {code: 'PEN', name: 'Peruvian Nuevo Sol', symbol: 'S/.'},
+            {code: 'PGK', name: 'Papua New Guinean Kina', symbol: 'K'},
+            {code: 'PHP', name: 'Philippine Peso', symbol: '₱'},
+            {code: 'PKR', name: 'Pakistani Rupee', symbol: '₨'},
+            {code: 'PLN', name: 'Polish Zloty', symbol: 'zł'},
+            {code: 'PRB', name: 'Transnistrian Ruble', symbol: 'р.'},
+            {code: 'PYG', name: 'Paraguayan Guarani', symbol: '₲'},
+            {code: 'QAR', name: 'Qatari Rial', symbol: 'ر.ق'},
+            {code: 'RON', name: 'Romanian Leu', symbol: 'lei'},
+            {code: 'RSD', name: 'Serbian Dinar', symbol: 'дин.'},
+            {code: 'RUB', name: 'Russian Ruble', symbol: '₽'},
+            {code: 'RWF', name: 'Rwandan Franc', symbol: 'Fr'},
+            {code: 'SAR', name: 'Saudi Riyal', symbol: 'ر.س'},
+            {code: 'SEK', name: 'Swedish Krona', symbol: 'kr'},
+            {code: 'SGD', name: 'Singapore Dollar', symbol: '$'},
+            {code: 'SHP', name: 'Saint Helena Pound', symbol: '£'},
+            {code: 'SLE', name: 'Sierra Leonean Leone', symbol: 'Le'},
+            {code: 'SLL', name: 'Sierra Leonean Leone', symbol: 'Le'},
+            {code: 'SOS', name: 'Somali Shilling', symbol: 'Sh'},
+            {code: 'SRD', name: 'Surinamese Dollar', symbol: '$'},
+            {code: 'SSP', name: 'South Sudanese Pound', symbol: '£'},
+            {code: 'STN', name: 'São Tomé and Príncipe Dobra', symbol: 'Db'},
+            {code: 'SYP', name: 'Syrian Pound', symbol: '£'},
+            {code: 'SZL', name: 'Swazi Lilangeni', symbol: 'L'},
+            {code: 'THB', name: 'Thai Baht', symbol: '฿'},
+            {code: 'TJS', name: 'Tajikistani Somoni', symbol: 'ЅМ'},
+            {code: 'TMT', name: 'Turkmenistani Manat', symbol: 'm'},
+            {code: 'TND', name: 'Tunisian Dinar', symbol: 'د.ت'},
+            {code: 'TOP', name: 'Tongan Paʻanga', symbol: 'T$'},
+            {code: 'TRY', name: 'Turkish Lira', symbol: '₺'},
+            {code: 'TTD', name: 'Trinidad & Tobago Dollar', symbol: '$'},
+            {code: 'TVD', name: 'Tuvaluan Dollar', symbol: '$'},
+            {code: 'TWD', name: 'New Taiwan Dollar', symbol: '$'},
+            {code: 'TZS', name: 'Tanzanian Shilling', symbol: 'Sh'},
+            {code: 'UAH', name: 'Ukrainian Hryvnia', symbol: '₴'},
+            {code: 'UGX', name: 'Ugandan Shilling', symbol: 'Sh'},
+            {code: 'USD', name: 'United States Dollar', symbol: '$'},
+            {code: 'UYU', name: 'Uruguayan Peso', symbol: '$'},
+            {code: 'UZS', name: 'Uzbekistan Som', symbol: 'soʻm'},
+            {code: 'VES', name: 'Venezuelan Bolívar Soberano', symbol: 'Bs.'},
+            {code: 'VND', name: 'Vietnamese Dong', symbol: '₫'},
+            {code: 'VUV', name: 'Vanuatu Vatu', symbol: 'Vt'},
+            {code: 'WST', name: 'Samoan Tala', symbol: 'T'},
+            {code: 'XAF', name: 'CFA Franc BEAC', symbol: 'Fr'},
+            {code: 'XCD', name: 'East Caribbean Dollar', symbol: '$'},
+            {code: 'XOF', name: 'CFA Franc BCEAO', symbol: 'Fr'},
+            {code: 'XPF', name: 'CFP Franc', symbol: 'Fr'},
+            {code: 'YER', name: 'Yemeni Rial', symbol: '﷼'},
+            {code: 'ZAR', name: 'South African Rand', symbol: 'R'},
+            {code: 'ZMW', name: 'Zambian Kwacha', symbol: 'ZK'},
+            {code: 'ZWB', name: 'Zimbabwean Dollar', symbol: '$'}
+        ];
+        
+        function populateCurrencies() {
+            const select = document.getElementById('budget-currency');
+            // Update option text to 'CODE SYMBOL'
+            currencies.forEach(currency => {
+                const option = document.createElement('option');
+                option.value = currency.symbol || currency.code;
+                option.textContent = `${currency.code} ${currency.symbol || currency.code}`;
+                select.appendChild(option);
+            });
+        }
+        
+        // Call on load
+        populateCurrencies();
+        
+        // Initial render
+        render();
+
+        function resetEdit() {
+            editingIndex = -1;
+            document.getElementById('item-name').value = '';
+            document.getElementById('item-price').value = '';
+            document.getElementById('item-frequency').value = '';
+            document.getElementById('add-button').innerText = 'Add Item';
+        }
+        
+        document.addEventListener('click', (event) => {
+            if (editingIndex !== -1 && !event.target.closest('#add-item-section') && !event.target.closest('.item-card-buttons')) {
+                resetEdit();
+            }
+        });
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark') ? 'enabled' : 'disabled');
+            updateToggleText();
+        }
+        
+        function updateToggleText() {
+            const toggleButton = document.getElementById('dark-mode-toggle');
+            toggleButton.innerText = document.documentElement.classList.contains('dark') ? 'Toggle Light Mode' : 'Toggle Dark Mode';
+        }
+        
+        // Load dark mode preference
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            document.documentElement.classList.add('dark');
+        }
+        updateToggleText();
+    </script>
+</body>
+</html>         
