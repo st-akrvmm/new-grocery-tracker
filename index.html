@@ -98,6 +98,7 @@
         <button onclick="document.getElementById('add-item-section').scrollIntoView({behavior: 'smooth'})" class="px-6 py-3 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition text-lg">Add Item</button>
         <button onclick="undo()" class="px-6 py-3 bg-gray-500 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-700 transition text-lg">Undo</button>
     </div>
+    <div id="toast" class="hidden fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">Saved!</div>
 
     <script>
         const STORAGE_KEY = 'groceryTracker';
@@ -123,6 +124,7 @@
             data.currency = currency;
             data.budget = amount;
             saveData();
+            showToast();
             render();
         }
         
@@ -518,6 +520,21 @@
                 saveData();
                 render();
             }
+        }
+
+        // Add Enter key listener for budget
+        document.getElementById('budget-amount').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                setBudget();
+            }
+        });
+
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 2000);
         }
     </script>
 </body>
