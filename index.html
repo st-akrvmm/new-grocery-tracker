@@ -1,9 +1,12 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#6366f1">
+    <link rel="manifest" href="/manifest.json">
     <title>Grocery Tracker</title>
     <!-- Update Tailwind script with dark mode config -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,78 +16,88 @@
         }
     </script>
 </head>
-<body class="bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-gray-900 dark:to-gray-800 min-h-screen flex flex-col items-center p-6 text-gray-900 dark:text-gray-100">
-    <header class="w-full max-w-4xl text-center mb-8 flex justify-between items-center">
-        <div>
-            <h1 class="text-4xl font-bold text-indigo-800 dark:text-indigo-200">Grocery Tracker</h1>
-            <p class="text-lg text-gray-600 dark:text-gray-300 mt-2">Plan, budget, and track your groceries effortlessly</p>
+<!-- Update body and header for dark blue overlay style -->
+<body class="bg-white dark:bg-gray-900 min-h-screen flex flex-col text-gray-900 dark:text-gray-100">
+    <!-- Fixed header with dark blue background -->
+    <header class="fixed top-0 left-0 w-full bg-indigo-800 dark:bg-indigo-900 text-white p-4 shadow-md z-10">
+        <div class="container mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">Grocery Tracker</h1>
+                <p class="text-sm">Plan, budget, and track effortlessly</p>
+            </div>
+            <button id="dark-mode-toggle" onclick="toggleDarkMode()" class="px-4 py-2 bg-indigo-600 dark:bg-indigo-700 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-800 transition">Toggle Dark Mode</button>
         </div>
-        <!-- Add id to toggle button -->
-        <button id="dark-mode-toggle" onclick="toggleDarkMode()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">Toggle Dark Mode</button>
     </header>
+    <!-- Update desktop width to ~30% larger -->
+    <div class="mt-24 container mx-auto p-4 space-y-8 max-w-full lg:max-w-[580px] pb-20">
+        <main class="space-y-8">
+            <!-- Budget Setup -->
+            <section class="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl shadow-md space-y-4">
+                <h2 class="text-xl font-semibold text-indigo-800 dark:text-indigo-300">Set Monthly Budget</h2>
+                <!-- Stack budget form fully on mobile -->
+                <div class="flex flex-col space-y-4">
+                    <select id="budget-currency" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition duration-200">
+                        <option value="">Select Currency</option>
+                    </select>
+                    <input id="budget-amount" type="number" placeholder="Budget Amount" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition duration-200">
+                    <!-- Make Save Budget button full-width like Add Item -->
+                    <button onclick="setBudget()" class="w-full px-6 py-3 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition duration-200 text-lg">Save Budget</button>
+                </div>
+                <p id="current-budget" class="text-lg text-gray-700 dark:text-gray-300"></p>
+            </section>
 
-    <main class="w-full max-w-4xl bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 space-y-8">
-        <!-- Budget Setup -->
-        <section class="space-y-4">
-            <h2 class="text-2xl font-semibold text-indigo-700 dark:text-indigo-300">Set Monthly Budget</h2>
-            <div class="flex space-x-4">
-                <select id="budget-currency" class="flex-1 p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
-                    <option value="">Select Currency</option>
-                </select>
-                <input id="budget-amount" type="number" placeholder="Budget Amount" class="flex-1 p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
-                <button onclick="setBudget()" class="px-6 py-3 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition">Save Budget</button>
-            </div>
-            <p id="current-budget" class="text-lg text-gray-700 dark:text-gray-300"></p>
-        </section>
+            <!-- Add Item Form -->
+            <!-- Wrap add item form in div for outside click detection -->
+            <section class="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl shadow-md space-y-4" id="add-item-section">
+                <h2 class="text-xl font-semibold text-indigo-800 dark:text-indigo-300">Add Grocery Item</h2>
+                <!-- Stack add item form fully on mobile -->
+                <div class="flex flex-col space-y-4">
+                    <div class="relative">
+                        <input id="item-name" type="text" placeholder="Item Name (e.g., Oats)" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition duration-200" oninput="showSuggestions(this.value)">
+                        <div id="suggestions" class="absolute z-10 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg mt-1 w-full max-h-40 overflow-y-auto hidden"></div>
+                    </div>
+                    <input id="item-price" type="number" placeholder="Unit Price" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition duration-200">
+                    <input id="item-frequency" type="number" placeholder="Frequency (days)" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition duration-200">
+                    <!-- Ensure button is full width like inputs -->
+                    <button id="add-button" onclick="addItem()" class="w-full px-6 py-3 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition text-lg">Add Item</button>
+                </div>
+            </section>
 
-        <!-- Add Item Form -->
-        <!-- Wrap add item form in div for outside click detection -->
-        <section class="space-y-4" id="add-item-section">
-            <h2 class="text-2xl font-semibold text-indigo-700 dark:text-indigo-300">Add Grocery Item</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <!-- Wrap item-name and suggestions in a relative div for proper positioning and width -->
-                <div class="relative">
-                    <input id="item-name" type="text" placeholder="Item Name (e.g., Oats)" class="p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400" oninput="showSuggestions(this.value)">
-                    <div id="suggestions" class="absolute z-10 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg mt-1 w-full max-h-40 overflow-y-auto hidden"></div>
-                </div>
-                <input id="item-price" type="number" placeholder="Unit Price" class="p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
-                <input id="item-frequency" type="number" placeholder="Frequency (days)" class="p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
-                <button id="add-button" onclick="addItem()" class="px-6 py-3 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition">Add Item</button>
-            </div>
-        </section>
+            <!-- Grocery List -->
+            <section class="space-y-4">
+                <h2 class="text-xl font-semibold text-indigo-800 dark:text-indigo-300">Grocery Items</h2>
+                <div id="item-list" class="space-y-6"></div>
+            </section>
 
-        <!-- Grocery List -->
-        <section class="space-y-4">
-            <div class="flex justify-between items-center">
-                <h2 class="text-2xl font-semibold text-indigo-700 dark:text-indigo-300">Grocery Items</h2>
-                <button onclick="undo()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">Undo</button>
-            </div>
-            <div id="item-list" class="space-y-4"></div>
-        </section>
-
-        <!-- Monthly Summary -->
-        <section class="space-y-4">
-            <h2 class="text-2xl font-semibold text-indigo-700 dark:text-indigo-300">Monthly Summary</h2>
-            <div id="summary" class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
-                <div class="p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
-                    <p class="text-sm text-gray-600 dark:text-gray-300">Total Planned</p>
-                    <p id="total-planned" class="text-xl font-bold text-blue-800 dark:text-blue-200"></p>
+            <!-- Monthly Summary -->
+            <section class="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl shadow-md space-y-4">
+                <h2 class="text-xl font-semibold text-indigo-800 dark:text-indigo-300">Monthly Summary</h2>
+                <!-- Stack summary to 1-col on mobile -->
+                <div id="summary" class="grid grid-cols-1 gap-4 text-center">
+                    <div class="p-4 bg-blue-50 dark:bg-blue-900 rounded-lg transition duration-200">
+                        <p class="text-sm text-gray-600 dark:text-gray-300">Total Planned</p>
+                        <p id="total-planned" class="text-xl font-bold text-blue-800 dark:text-blue-200"></p>
+                    </div>
+                    <div class="p-4 bg-red-50 dark:bg-red-900 rounded-lg transition duration-200">
+                        <p class="text-sm text-gray-600 dark:text-gray-300">Total Spent</p>
+                        <p id="total-spent" class="text-xl font-bold text-red-800 dark:text-red-200"></p>
+                    </div>
+                    <div class="p-4 bg-green-50 dark:bg-green-900 rounded-lg transition duration-200">
+                        <p class="text-sm text-gray-600 dark:text-gray-300">Remaining Budget</p>
+                        <p id="remaining-budget" class="text-xl font-bold text-green-800 dark:text-green-200"></p>
+                    </div>
+                    <div class="p-4 bg-purple-50 dark:bg-purple-900 rounded-lg transition duration-200">
+                        <p class="text-sm text-gray-600 dark:text-gray-300">Overall Progress</p>
+                        <p id="overall-progress" class="text-xl font-bold text-purple-800 dark:text-purple-200"></p>
+                    </div>
                 </div>
-                <div class="p-4 bg-red-50 dark:bg-red-900 rounded-lg">
-                    <p class="text-sm text-gray-600 dark:text-gray-300">Total Spent</p>
-                    <p id="total-spent" class="text-xl font-bold text-red-800 dark:text-red-200"></p>
-                </div>
-                <div class="p-4 bg-green-50 dark:bg-green-900 rounded-lg">
-                    <p class="text-sm text-gray-600 dark:text-gray-300">Remaining Budget</p>
-                    <p id="remaining-budget" class="text-xl font-bold text-green-800 dark:text-green-200"></p>
-                </div>
-                <div class="p-4 bg-purple-50 dark:bg-purple-900 rounded-lg">
-                    <p class="text-sm text-gray-600 dark:text-gray-300">Overall Progress</p>
-                    <p id="overall-progress" class="text-xl font-bold text-purple-800 dark:text-purple-200"></p>
-                </div>
-            </div>
-        </section>
-    </main>
+            </section>
+        </main>
+    </div>
+    <div class="fixed bottom-0 left-0 w-full bg-white dark:bg-gray-800 border-t border-gray-300 dark:border-gray-700 p-4 shadow-md z-10 flex justify-around">
+        <button onclick="document.getElementById('add-item-section').scrollIntoView({behavior: 'smooth'})" class="px-6 py-3 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition text-lg">Add Item</button>
+        <button onclick="undo()" class="px-6 py-3 bg-gray-500 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-700 transition text-lg">Undo</button>
+    </div>
 
     <script>
         const STORAGE_KEY = 'groceryTracker';
@@ -102,7 +115,9 @@
         let editingIndex = -1;
         let history = [];
         
+        // Add history push to setBudget
         function setBudget() {
+            history.push(JSON.parse(JSON.stringify(data)));
             const currency = document.getElementById('budget-currency').value || '$';
             const amount = parseFloat(document.getElementById('budget-amount').value) || 0;
             data.currency = currency;
@@ -156,6 +171,7 @@
             }
         }
         
+        // Add scroll to form in editItem
         function editItem(index) {
             editingIndex = index;
             const item = data.items[index];
@@ -163,6 +179,7 @@
             document.getElementById('item-price').value = item.price;
             document.getElementById('item-frequency').value = item.frequency;
             document.getElementById('add-button').innerText = 'Update Item';
+            document.getElementById('add-item-section').scrollIntoView({behavior: 'smooth'});
         }
         
         function deleteItem(index) {
@@ -202,24 +219,28 @@
             itemList.innerHTML = '';
             data.items.forEach((item, index) => {
                 const progress = (item.timesEaten / item.timesPerMonth) * 100;
+                // Item card: details, then buttons below
                 const itemCard = `
-                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow flex justify-between items-center">
+                    <div class="bg-white dark:bg-gray-700 p-4 rounded-xl shadow-md flex flex-col space-y-4" ondblclick="editItem(${index}); document.getElementById('add-item-section').scrollIntoView({behavior: 'smooth'})">
                         <div>
                             <h3 class="text-lg font-medium text-gray-800 dark:text-gray-200">${item.name}</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-300">Price: ${data.currency}${item.price.toFixed(2)} | Freq: every ${item.frequency} days</p>
-                            <p class="text-sm text-gray-600 dark:text-gray-300">Needed: ${item.timesPerMonth} times | Eaten: ${item.timesEaten}</p>
-                            <p class="text-sm text-gray-600 dark:text-gray-300">Last eaten: ${item.lastEaten || 'Never'}</p>
-                            <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5 mt-2">
-                                <div class="bg-indigo-600 dark:bg-indigo-400 h-2.5 rounded-full" style="width: ${progress}%"> </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Price: ${data.currency}${item.price.toFixed(2)}</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Frequency: every ${item.frequency} days</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Needed: ${item.timesPerMonth} | Eaten: ${item.timesEaten}</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Last: ${item.lastEaten || 'Never'}</p>
+                            <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5 my-2">
+                                <div class="bg-indigo-600 dark:bg-indigo-400 h-2.5 rounded-full" style="width: ${progress}%"></div>
                             </div>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${progress.toFixed(0)}% complete</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">${progress.toFixed(0)}% complete</p>
                         </div>
-                        <!-- Buttons: adjust hover for dark -->
-                        <div class="flex space-x-2 item-card-buttons">
-                            <button onclick="editItem(${index})" class="px-4 py-2 bg-yellow-500 dark:bg-yellow-600 text-white rounded-lg hover:bg-yellow-600 dark:hover:bg-yellow-700 transition">Edit</button>
-                            <button onclick="decrementEaten(${index})" class="px-4 py-2 bg-red-500 dark:bg-red-600 text-white rounded-lg hover:bg-red-600 dark:hover:bg-red-700 transition ${item.timesEaten <= 0 ? 'opacity-50 cursor-not-allowed' : ''}">-</button>
-                            <button onclick="incrementEaten(${index})" class="px-4 py-2 bg-green-500 dark:bg-green-600 text-white rounded-lg hover:bg-green-600 dark:hover:bg-green-700 transition ${item.timesEaten >= item.timesPerMonth ? 'opacity-50 cursor-not-allowed' : ''}">+</button>
-                            <button onclick="deleteItem(${index})" class="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-500 text-xl font-bold">&times;</button>
+                        <!-- Stack buttons vertically below details -->
+                        <div class="flex flex-col space-y-2">
+                            <button onclick="editItem(${index})" class="w-full py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition">Edit</button>
+                            <div class="flex space-x-2">
+                                <button onclick="decrementEaten(${index})" class="flex-1 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition ${item.timesEaten <= 0 ? 'opacity-50' : ''}">-</button>
+                                <button onclick="incrementEaten(${index})" class="flex-1 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition ${item.timesEaten >= item.timesPerMonth ? 'opacity-50' : ''}">+</button>
+                            </div>
+                            <button onclick="deleteItem(${index})" class="w-full py-2 text-red-500 hover:text-red-700">Delete</button>
                         </div>
                     </div>
                 `;
@@ -483,6 +504,21 @@
             document.documentElement.classList.add('dark');
         }
         updateToggleText();
+
+        // Register service worker for offline/PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').then(() => console.log('Service Worker Registered'));
+        }
+
+        // Update undo to limit history
+        function undo() {
+            if (history.length > 0) {
+                data = history.pop();
+                if (history.length > 10) history.shift(); // Limit to last 10 actions
+                saveData();
+                render();
+            }
+        }
     </script>
 </body>
 </html>         
